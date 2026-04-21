@@ -198,6 +198,8 @@ extern int32_t qkrt_sampler_job_results(Samples **out, Service *service, Job *jo
  */
 extern int32_t qkrt_estimator_job_results(ExpectationValues **out, Service *service, Job *job);
 
+extern int32_t qkrt_fake_estimator_results(ExpectationValues **out);
+
 extern size_t qkrt_samples_num_samples(const Samples *samples);
 
 extern size_t qkrt_expectation_values_num_evs(ExpectationValues *evs);

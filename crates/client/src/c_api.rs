@@ -344,6 +344,17 @@ pub unsafe extern "C" fn qkrt_estimator_job_results(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn qkrt_fake_estimator_results(
+    out: *mut *mut ExpectationValues,
+) -> ExitCode {
+    let results = ExpectationValues(vec![1.0, 0.0, -1.5, 300.1, 0.001]);
+    let boxed_results_raw_ptr = Box::into_raw(Box::new(results));
+    *out = boxed_results_raw_ptr;
+    ExitCode::Success
+}
+
+
+#[no_mangle]
 pub unsafe extern "C" fn qkrt_samples_num_samples(samples: *const Samples) -> usize {
     unsafe { const_ptr_as_ref(samples) }.0.len()
 }

@@ -8,8 +8,16 @@ set(CMAKE_C_EXTENSIONS OFF)
 if(MSVC)
     add_compile_options(/W3)
 else()
-    add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra)
 endif()
+
+add_link_options(-fsanitize=address)
+add_compile_options(-fno-omit-frame-pointer -g -fsanitize=address,undefined,leak)
+
+# add_compile_options(-fsanitize=address,undefined,leak -fno-omit-frame-pointer -g)
+add_link_options(-fsanitize=address,undefined,leak)
+
+set(_asan "CFLAGS=-g -fno-omit-frame-pointer -fsanitize=address" "LDFLAGS=-fsanitize=address")
 
 # Build type -> Cargo profile
 if(NOT CMAKE_BUILD_TYPE)
@@ -78,6 +86,10 @@ set_property(TARGET qiskit PROPERTY IMPORTED_LOCATION ${QISKIT_LIBPATH})
 set_property(TARGET qiskit PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${QISKIT_INCDIR})
 add_dependencies(qiskit qiskit_src)
 
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS qiskit_src)
+set_property(TARGET qiskit_src PROPERTY BUILD_COMMAND "${CMAKE_COMMAND}" -E env ${_asan} ${MAKE_EXECUTABLE} c)
+
+
 # ---- Build Rust cdylib via cargo --------------------------------------------
 add_custom_command(
         OUTPUT ${RUST_LIBPATH}
@@ -100,6 +112,10 @@ set_property(TARGET qiskit_ibm_runtime PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${
 add_dependencies(qiskit_ibm_runtime qiskit_ibm_runtime_build)
 
 # ---- Samples -----------------------------------------------------------------
+add_executable(test_evs_copy samples/test_evs_copy.c)
+target_include_directories(test_evs_copy PRIVATE ${PROJECT_INCLUDEDIR})
+target_link_libraries(test_evs_copy PRIVATE qiskit qiskit_ibm_runtime)
+
 add_executable(test_job_submit samples/test_job_submit.c)
 target_include_directories(test_job_submit PRIVATE ${PROJECT_INCLUDEDIR})
 target_link_libraries(test_job_submit PRIVATE qiskit qiskit_ibm_runtime)
@@ -115,6 +131,7 @@ target_link_libraries(test_ghz_estimator_run PRIVATE qiskit qiskit_ibm_runtime)
 add_executable(test_lucj_fe4s4 samples/test_lucj_fe4s4.c)
 target_include_directories(test_lucj_fe4s4 PRIVATE ${PROJECT_INCLUDEDIR})
 target_link_libraries(test_lucj_fe4s4 PRIVATE qiskit qiskit_ibm_runtime)
+
 
 # ---- Tests -------------------------------------------------------------------
 enable_testing()
